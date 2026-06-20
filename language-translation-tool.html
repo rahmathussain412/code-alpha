@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Language Translation Tool</title>
+<style>
+  :root{
+    --bg:#11151c;
+    --panel:#171c25;
+    --panel-2:#1d232e;
+    --line:#2a313d;
+    --text:#eef0f2;
+    --text-dim:#8b93a1;
+    --accent:#d99a4e;
+    --accent-dim:#8a6a3f;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:48px 20px 70px;
+  }
+
+  .header{
+    width:100%;
+    max-width:960px;
+    margin-bottom:36px;
+  }
+
+  .header .tag{
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:10px;
+  }
+
+  .header h1{
+    font-size:30px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.3px;
+    color:var(--text);
+  }
+
+  .panel{
+    width:100%;
+    max-width:960px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:28px;
+  }
+
+  .lang-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:24px;
+  }
+
+  .lang-field{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+
+  .lang-field label{
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:10.5px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+
+  select{
+    appearance:none;
+    -webkit-appearance:none;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:11px 38px 11px 14px;
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    font-size:15px;
+    color:var(--text);
+    cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%238b93a1' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    width:100%;
+    transition:border-color .15s ease;
+  }
+  select:hover, select:focus{
+    border-color:var(--accent);
+    outline:none;
+  }
+  select option{
+    background:var(--panel-2);
+    color:var(--text);
+  }
+
+  .swap-btn{
+    width:40px;
+    height:40px;
+    min-width:40px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    margin-top:19px;
+    transition:transform .25s ease, background .2s ease, border-color .2s ease;
+    flex-shrink:0;
+  }
+  .swap-btn:hover{
+    background:var(--accent-dim);
+    border-color:var(--accent);
+  }
+  .swap-btn.spin{ transform:rotate(180deg); }
+  .swap-btn svg path{ stroke:var(--text); }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:720px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .text-block{
+    display:flex;
+    flex-direction:column;
+  }
+
+  .text-block .label-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:8px;
+  }
+
+  .text-block .label-row .lbl{
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:10.5px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+
+  .text-block .label-row .count{
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:10.5px;
+    color:var(--text-dim);
+  }
+
+  textarea{
+    width:100%;
+    min-height:220px;
+    resize:vertical;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    border-radius:10px;
+    padding:16px;
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    font-size:15.5px;
+    line-height:1.6;
+    color:var(--text);
+  }
+  textarea:focus{ outline:none; border-color:var(--accent); }
+  textarea::placeholder{ color:#5b6372; }
+
+  .output-box{
+    width:100%;
+    min-height:220px;
+    border:1px solid var(--line);
+    background:#15191f;
+    border-radius:10px;
+    padding:16px;
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    font-size:15.5px;
+    line-height:1.6;
+    color:var(--text);
+    overflow-y:auto;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+  }
+  .output-box.placeholder{ color:#5b6372; }
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+  }
+
+  .tool-btn{
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text-dim);
+    border-radius:8px;
+    padding:8px 13px;
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    font-size:12.5px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    transition:border-color .15s ease,color .15s ease;
+  }
+  .tool-btn:hover{ border-color:var(--accent); color:var(--text); }
+  .tool-btn:hover svg path, .tool-btn:hover svg circle{ stroke:var(--accent); }
+  .tool-btn svg path{ stroke:var(--text-dim); transition:stroke .15s ease; }
+  .tool-btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .tool-btn:disabled:hover{ border-color:var(--line); color:var(--text-dim); }
+  .tool-btn:disabled:hover svg path{ stroke:var(--text-dim); }
+
+  .tool-btn.confirmed{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .tool-btn.confirmed svg path{ stroke:var(--accent); }
+
+  .action-row{
+    display:flex;
+    justify-content:center;
+    margin:28px 0 6px;
+  }
+
+  .translate-btn{
+    background:var(--accent);
+    color:#1a1208;
+    border:none;
+    border-radius:9px;
+    padding:14px 46px;
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background .2s ease, transform .1s ease;
+  }
+  .translate-btn:hover{ background:#e6ab63; }
+  .translate-btn:active{ transform:scale(0.98); }
+  .translate-btn:disabled{ background:#4a4438; color:#8b8478; cursor:wait; }
+
+  .status-line{
+    text-align:center;
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:11.5px;
+    color:var(--text-dim);
+    min-height:16px;
+    margin-top:6px;
+  }
+  .status-line.err{ color:#e07a5f; }
+
+  footer{
+    margin-top:44px;
+    max-width:960px;
+    width:100%;
+    border-top:1px solid var(--line);
+    padding-top:16px;
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    font-size:12px;
+    color:var(--text-dim);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="tag">Internship Project</div>
+  <h1>Language Translation Tool</h1>
+</div>
+
+<div class="panel">
+
+  <div class="lang-row">
+    <div class="lang-field">
+      <label for="sourceLang">From</label>
+      <select id="sourceLang"></select>
+    </div>
+
+    <button class="swap-btn" id="swapBtn" title="Swap languages">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M7 7h11l-3-3M17 17H6l3 3" stroke="#eef0f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <div class="lang-field">
+      <label for="targetLang">To</label>
+      <select id="targetLang"></select>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="text-block">
+      <div class="label-row">
+        <span class="lbl">Input</span>
+        <span class="count" id="charCount">0 characters</span>
+      </div>
+      <textarea id="sourceText" placeholder="Type or paste text here..."></textarea>
+      <div class="toolbar">
+        <button class="tool-btn" id="clearBtn">Clear</button>
+        <button class="tool-btn" id="speakSource">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2v6h4l5 4V5z" stroke-width="1.6"/><path d="M16 8a5 5 0 010 8" stroke-width="1.6"/></svg>
+          Listen
+        </button>
+      </div>
+    </div>
+
+    <div class="text-block">
+      <div class="label-row">
+        <span class="lbl">Output</span>
+        <span class="count" id="resultCount">&nbsp;</span>
+      </div>
+      <div class="output-box placeholder" id="outputBox">Translation will appear here.</div>
+      <div class="toolbar">
+        <button class="tool-btn" id="copyBtn" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="1.5" stroke-width="1.6"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1" stroke-width="1.6"/></svg>
+          Copy
+        </button>
+        <button class="tool-btn" id="speakTarget" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2v6h4l5 4V5z" stroke-width="1.6"/><path d="M16 8a5 5 0 010 8" stroke-width="1.6"/></svg>
+          Listen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="translate-btn" id="translateBtn">Translate</button>
+  </div>
+  <div class="status-line" id="statusLine">&nbsp;</div>
+</div>
+
+<footer>
+  Object Detection &amp; Tracking project workspace — built for quick language translation tasks.
+</footer>
+
+<script>
+const LANGUAGES = {
+  "auto":"Detect language","af":"Afrikaans","sq":"Albanian","am":"Amharic","ar":"Arabic","hy":"Armenian",
+  "az":"Azerbaijani","eu":"Basque","be":"Belarusian","bn":"Bengali","bs":"Bosnian","bg":"Bulgarian",
+  "ca":"Catalan","ceb":"Cebuano","ny":"Chichewa","zh-CN":"Chinese (Simplified)","zh-TW":"Chinese (Traditional)",
+  "co":"Corsican","hr":"Croatian","cs":"Czech","da":"Danish","nl":"Dutch","en":"English","eo":"Esperanto",
+  "et":"Estonian","tl":"Filipino","fi":"Finnish","fr":"French","fy":"Frisian","gl":"Galician","ka":"Georgian",
+  "de":"German","el":"Greek","gu":"Gujarati","ht":"Haitian Creole","ha":"Hausa","haw":"Hawaiian","he":"Hebrew",
+  "hi":"Hindi","hmn":"Hmong","hu":"Hungarian","is":"Icelandic","ig":"Igbo","id":"Indonesian","ga":"Irish",
+  "it":"Italian","ja":"Japanese","jw":"Javanese","kn":"Kannada","kk":"Kazakh","km":"Khmer","rw":"Kinyarwanda",
+  "ko":"Korean","ku":"Kurdish","ky":"Kyrgyz","lo":"Lao","la":"Latin","lv":"Latvian","lt":"Lithuanian",
+  "lb":"Luxembourgish","mk":"Macedonian","mg":"Malagasy","ms":"Malay","ml":"Malayalam","mt":"Maltese",
+  "mi":"Maori","mr":"Marathi","mn":"Mongolian","my":"Myanmar (Burmese)","ne":"Nepali","no":"Norwegian",
+  "or":"Odia","ps":"Pashto","fa":"Persian","pl":"Polish","pt":"Portuguese","pa":"Punjabi","ro":"Romanian",
+  "ru":"Russian","sm":"Samoan","gd":"Scots Gaelic","sr":"Serbian","st":"Sesotho","sn":"Shona","sd":"Sindhi",
+  "si":"Sinhala","sk":"Slovak","sl":"Slovenian","so":"Somali","es":"Spanish","su":"Sundanese","sw":"Swahili",
+  "sv":"Swedish","tg":"Tajik","ta":"Tamil","tt":"Tatar","te":"Telugu","th":"Thai","tr":"Turkish",
+  "tk":"Turkmen","uk":"Ukrainian","ur":"Urdu","ug":"Uyghur","uz":"Uzbek","vi":"Vietnamese","cy":"Welsh",
+  "xh":"Xhosa","yi":"Yiddish","yo":"Yoruba","zu":"Zulu"
+};
+
+const sourceSel = document.getElementById('sourceLang');
+const targetSel = document.getElementById('targetLang');
+const sourceText = document.getElementById('sourceText');
+const outputBox = document.getElementById('outputBox');
+const translateBtn = document.getElementById('translateBtn');
+const statusLine = document.getElementById('statusLine');
+const charCount = document.getElementById('charCount');
+const resultCount = document.getElementById('resultCount');
+const copyBtn = document.getElementById('copyBtn');
+const clearBtn = document.getElementById('clearBtn');
+const swapBtn = document.getElementById('swapBtn');
+const speakSourceBtn = document.getElementById('speakSource');
+const speakTargetBtn = document.getElementById('speakTarget');
+
+let lastTranslation = "";
+let lastTargetLang = "en";
+
+function populateSelect(select, excludeAuto){
+  Object.entries(LANGUAGES).forEach(([code, name])=>{
+    if(excludeAuto && code === 'auto') return;
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+}
+populateSelect(sourceSel, false);
+populateSelect(targetSel, true);
+sourceSel.value = 'auto';
+targetSel.value = 'ur';
+
+sourceText.addEventListener('input', ()=>{
+  charCount.textContent = sourceText.value.length + ' characters';
+});
+
+clearBtn.addEventListener('click', ()=>{
+  sourceText.value = '';
+  charCount.textContent = '0 characters';
+  outputBox.textContent = 'Translation will appear here.';
+  outputBox.classList.add('placeholder');
+  resultCount.innerHTML = '&nbsp;';
+  copyBtn.disabled = true;
+  speakTargetBtn.disabled = true;
+  lastTranslation = "";
+  sourceText.focus();
+});
+
+swapBtn.addEventListener('click', ()=>{
+  if(sourceSel.value === 'auto'){
+    statusLine.textContent = "Can't swap while source is 'Detect language'.";
+    statusLine.classList.add('err');
+    setTimeout(()=>{ statusLine.textContent=''; statusLine.classList.remove('err'); }, 2200);
+    return;
+  }
+  swapBtn.classList.add('spin');
+  setTimeout(()=> swapBtn.classList.remove('spin'), 250);
+
+  const s = sourceSel.value;
+  const t = targetSel.value;
+  sourceSel.value = t;
+  targetSel.value = s;
+
+  if(lastTranslation){
+    sourceText.value = lastTranslation;
+    charCount.textContent = sourceText.value.length + ' characters';
+  }
+});
+
+copyBtn.addEventListener('click', async ()=>{
+  if(!lastTranslation) return;
+  try{
+    await navigator.clipboard.writeText(lastTranslation);
+    const original = copyBtn.innerHTML;
+    copyBtn.classList.add('confirmed');
+    copyBtn.innerHTML = 'Copied';
+    setTimeout(()=>{
+      copyBtn.classList.remove('confirmed');
+      copyBtn.innerHTML = original;
+    }, 1400);
+  }catch(e){
+    statusLine.textContent = 'Could not copy — select and copy manually.';
+    statusLine.classList.add('err');
+  }
+});
+
+function speak(text, langCode){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  const map = {"zh-CN":"zh-CN","zh-TW":"zh-TW"};
+  utter.lang = map[langCode] || langCode || 'en';
+  window.speechSynthesis.speak(utter);
+}
+
+speakSourceBtn.addEventListener('click', ()=>{
+  if(!sourceText.value.trim()) return;
+  const lc = sourceSel.value === 'auto' ? 'en' : sourceSel.value;
+  speak(sourceText.value, lc);
+});
+
+speakTargetBtn.addEventListener('click', ()=>{
+  if(!lastTranslation) return;
+  speak(lastTranslation, lastTargetLang);
+});
+
+async function translateText(){
+  const text = sourceText.value.trim();
+  if(!text){
+    statusLine.textContent = 'Type something first.';
+    statusLine.classList.add('err');
+    setTimeout(()=>{ statusLine.textContent=''; statusLine.classList.remove('err'); }, 2000);
+    return;
+  }
+
+  const sl = sourceSel.value;
+  const tl = targetSel.value;
+
+  translateBtn.disabled = true;
+  translateBtn.textContent = 'Translating...';
+  statusLine.textContent = '';
+  statusLine.classList.remove('err');
+  outputBox.classList.remove('placeholder');
+  outputBox.textContent = '';
+  copyBtn.disabled = true;
+  speakTargetBtn.disabled = true;
+
+  try{
+    const lines = text.split('\n');
+    const translatedLines = [];
+
+    for(const line of lines){
+      if(line.trim() === ''){
+        translatedLines.push('');
+        continue;
+      }
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(line)}`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Network response was not ok (' + res.status + ')');
+      const data = await res.json();
+      const piece = data[0].map(chunk => chunk[0]).join('');
+      translatedLines.push(piece);
+    }
+
+    lastTranslation = translatedLines.join('\n');
+    lastTargetLang = tl;
+    outputBox.textContent = lastTranslation;
+    resultCount.textContent = lastTranslation.length + ' characters';
+    copyBtn.disabled = false;
+    speakTargetBtn.disabled = false;
+
+  }catch(err){
+    outputBox.classList.add('placeholder');
+    outputBox.textContent = 'Translation failed. Check your internet connection and try again.';
+    statusLine.textContent = 'Error: ' + err.message;
+    statusLine.classList.add('err');
+  }finally{
+    translateBtn.disabled = false;
+    translateBtn.textContent = 'Translate';
+  }
+}
+
+translateBtn.addEventListener('click', translateText);
+
+sourceText.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+    translateText();
+  }
+});
+</script>
+
+</body>
+</html>
